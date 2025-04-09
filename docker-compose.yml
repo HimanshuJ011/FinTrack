@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql_db
+    restart: always
+    ports:
+      - "3307:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=expense_tracker
+      - MYSQL_USER=expense_tracker
+      - MYSQL_PASSWORD=expense_tracker
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - expense_tracker_backend
+
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    image: expense-backend
+    container_name: expense_backend
+    ports:
+      - "8080:8080"
+
+    depends_on:
+      - mysql
+
+    env_file:
+      - ./backend/.env
+
+    networks:
+     - expense_tracker_backend
+
+volumes:
+  mysql_data:
+
+networks:
+  expense_tracker_backend:

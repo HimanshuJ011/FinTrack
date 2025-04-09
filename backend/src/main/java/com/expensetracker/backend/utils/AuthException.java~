@@ -1,0 +1,4 @@
+package com.expensetracker.backend.utils;
+
+public class AuthException {
+}

@@ -1,0 +1,51 @@
+package com.expensetracker.backend.serviceImpl;
+
+import com.expensetracker.backend.dto.AuthRequest;
+import com.expensetracker.backend.dto.AuthResponse;
+import com.expensetracker.backend.dto.RegisterRequest;
+import com.expensetracker.backend.model.User;
+import com.expensetracker.backend.respository.UserRepository;
+import com.expensetracker.backend.exception.AuthException;
+import com.expensetracker.backend.utils.JwtUtil;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
+@Service
+@RequiredArgsConstructor
+public class AuthenticationService {
+
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtUtil jwtUtil;
+
+    public AuthResponse register(RegisterRequest request) {
+        User user = User.builder()
+                .username(request.username)
+                .email(request.email)
+                .password(passwordEncoder.encode(request.password))
+                .build();
+        userRepository.save(user);
+        String jwtToken = jwtUtil.generateToken(user);
+        return new AuthResponse(jwtToken);
+    }
+
+    public AuthResponse authenticate(AuthRequest request) {
+//        System.out.println("Login attempt with: " + request.getUsername());
+
+        User user = userRepository.findByUsernameOrEmail(request.getUsername(), request.getEmail());
+
+        if (user == null) {
+            System.out.println("User not found");
+            throw new AuthException("User not found. Please check your username or email.");
+        }
+
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            throw new AuthException("Incorrect password. Please try again.");
+        }
+
+        String jwtToken = jwtUtil.generateToken(user);
+        return new AuthResponse(jwtToken);
+    }
+
+}
